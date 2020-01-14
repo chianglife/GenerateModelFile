@@ -1,0 +1,2 @@
+# GenerateModelFile
+Json校验，由JSON转YYModel文件，自动添加JSON中的注释，一键将Doclever中的JSON预览转成模型文件
