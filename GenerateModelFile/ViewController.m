@@ -62,25 +62,43 @@
         NSMutableString *appendCommentStr = @"".mutableCopy;//前面拼接的字符串,带有注释
         
         while (subStr.length > 1) {
-            NSRange range = [subStr rangeOfString:@"//"];
-            NSMutableString *beforeSlashStr = [subStr substringToIndex:range.location].mutableCopy;//截取到双斜杠所在的位置
-            [appendStr appendString:beforeSlashStr];
-            subStr = [subStr substringFromIndex:range.location];//双斜杠以后的字符串
+            NSRange slashRange = [subStr rangeOfString:@"//"];
+            NSMutableString *beforeSlashStr = @"".mutableCopy;
+            
+            if(slashRange.length > 0){//如果还有注释
+                beforeSlashStr = [subStr substringToIndex:slashRange.location].mutableCopy;//截取到双斜杠所在的位置
+                [appendStr appendString:beforeSlashStr];//拼接json字符串
+                subStr = [subStr substringFromIndex:slashRange.location];//从双斜杠开始以后的字符串，用于下次操作
+                
+                NSRange characterRange = [subStr rangeOfCharacterFromSet:set];//查找{["等字符
+                NSString *comment = [subStr substringToIndex:characterRange.location];//注释内容。//以后，特殊字符以前
+                //"code" : "0" ===>>> "code//注释" : "0"，把注释内容塞到属性名字后面
+                if ([beforeSlashStr containsString:@":"]) {//有属性名才会有：，才会有注释
+                    NSRange range = [beforeSlashStr rangeOfString:@"\""];
+                    NSMutableString *property = [beforeSlashStr substringFromIndex:range.location+1].mutableCopy;
+                    [appendCommentStr appendString:[beforeSlashStr substringToIndex:range.location+1]];
+                    NSRange range2 = [property rangeOfString:@"\""];//key的第二个"的位置
+                    [property insertString:comment atIndex:range2.location];
+                    [appendCommentStr appendString:property];
+                } else {
+                    [appendCommentStr appendString:beforeSlashStr];
+                }
+                
+            } else {//已经没有注释了，一直解析到最后的'}'符号
+                NSRange characterRange2 = [subStr rangeOfCharacterFromSet:set];//查找{["等字符
+                if (characterRange2.length > 0) {
+                    [appendStr appendString:[subStr substringWithRange:characterRange2]];
+                    [appendCommentStr appendString:[subStr substringWithRange:characterRange2]];
+                    subStr = [subStr substringFromIndex:characterRange2.location + characterRange2.length];
+                } else {
+                    subStr = @"";
+                    break;
+                }
+            }
             
             NSRange characterRange = [subStr rangeOfCharacterFromSet:set];//查找{["等字符
-            NSString *comment = [subStr substringToIndex:characterRange.location];//注释内容。//以后，特殊字符以前
-            
-            if ([beforeSlashStr containsString:@":"]) {//有属性名h才会有：，才会有注释
-                NSRange range = [beforeSlashStr rangeOfString:@"\""];
-                NSMutableString *property = [beforeSlashStr substringFromIndex:range.location+1].mutableCopy;
-                [appendCommentStr appendString:[beforeSlashStr substringToIndex:range.location+1]];
-                NSRange range2 = [property rangeOfString:@"\""];//key的第二个"的位置
-                [property insertString:comment atIndex:range2.location];
-                [appendCommentStr appendString:property];
-            } else {
-                [appendCommentStr appendString:beforeSlashStr];
-            }
             subStr = [subStr substringFromIndex:characterRange.location];//特殊字符以后的字符串
+            NSLog(@"++++++++++++++++++%@", subStr);
         }
         [appendStr appendString:subStr];
         [appendCommentStr appendString:subStr];
