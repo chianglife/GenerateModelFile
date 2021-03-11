@@ -184,6 +184,7 @@
 
 //生成类名和属性
 - (void)appendInterface:(NSDictionary *)dict className:(NSString *)className{
+    if (![dict isKindOfClass:[NSDictionary class]]) return;
     
     NSString *interface = [NSString stringWithFormat:@"\n@interface %@ : NSObject\n\n",className];
     NSString *implementation = [NSString stringWithFormat:@"\n@implementation %@\n\n",className];
@@ -213,6 +214,7 @@
             
         }
     }
+    
     interface = [interface stringByAppendingFormat:@"\n\n@end\n"];
     
     if (mapDict.allValues.count > 0) {
